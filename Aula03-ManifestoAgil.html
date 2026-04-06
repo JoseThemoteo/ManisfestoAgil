@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manifesto Ágil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  [data-theme="dark"] {
+    --bg: #0d0d0f; --bg2: #141416; --bg3: #1a1a1e; --bg4: #202024;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+    --text: #f0ede8; --text2: #9d9a94; --text3: #5c5a56;
+    --accent: #ccff00; --blue: #5b9cf6; --teal: #3dd9a4;
+    --coral: #f07b5b; --amber: #f5c842; --purple: #a78bfa;
+    --shadow: rgba(0,0,0,0.5);
+    --cover-bg: #080d00;
+  }
+  [data-theme="light"] {
+    --bg: #faf9f6; --bg2: #f2f0eb; --bg3: #e8e5de; --bg4: #dedad2;
+    --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.15);
+    --text: #1a1a18; --text2: #6b6860; --text3: #a8a49c;
+    --accent: #7aaa00; --blue: #1a5cbf; --teal: #0d7a54;
+    --coral: #c44a28; --amber: #a06010; --purple: #6b3fa0;
+    --shadow: rgba(0,0,0,0.1);
+    --cover-bg: #080d00;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; transition: background .3s, color .3s; }
+
+  /* TOP BAR */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 13px 20px;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    transition: background .3s, border-color .3s, opacity .3s;
+  }
+  .topbar.hidden { opacity: 0; pointer-events: none; }
+
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--border2); background: var(--bg2);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text2); transition: background .2s, color .2s, transform .15s;
+  }
+  .icon-btn:hover { background: var(--bg3); color: var(--text); transform: scale(1.06); }
+  .icon-btn svg { width: 17px; height: 17px; }
+
+  /* ═══════════════════════════════════════
+     COVER — redesigned
+  ═══════════════════════════════════════ */
+  #cover {
+    min-height: 100vh;
+    background: #060900;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    position: relative; overflow: hidden;
+  }
+
+  /* noise texture overlay */
+  #cover-noise {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .45;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+  }
+
+  /* subtle dot-grid */
+  #cover::before {
+    content: ''; position: absolute; inset: 0; z-index: 0;
+    background-image: radial-gradient(circle, rgba(204,255,0,0.18) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
+    animation: dotDrift 60s linear infinite;
+  }
+  @keyframes dotDrift { from{background-position:0 0} to{background-position:40px 40px} }
+
+  /* large glow orb — breathes */
+  #cover::after {
+    content: ''; position: absolute; z-index: 0; pointer-events: none;
+    top: -20%; left: 50%; transform: translateX(-50%);
+    width: 110vw; height: 90vh;
+    background: radial-gradient(ellipse at 50% 35%,
+      rgba(204,255,0,0.11) 0%,
+      rgba(204,255,0,0.04) 38%,
+      transparent 68%);
+    animation: orbBreathe 8s ease-in-out infinite;
+  }
+  @keyframes orbBreathe {
+    0%,100% { opacity:1; transform: translateX(-50%) scale(1); }
+    50%      { opacity:.7; transform: translateX(-50%) scale(1.1); }
+  }
+
+  /* floating particles */
+  .cover-particle {
+    position: absolute; z-index: 2; border-radius: 50%;
+    background: rgba(204,255,0,0.6);
+    pointer-events: none;
+    animation: floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(0) scale(1);  opacity: 0; }
+    8%   { opacity: .9; }
+    85%  { opacity: .2; }
+    100% { transform: translateY(-100vh) scale(.3); opacity: 0; }
+  }
+
+  /* ── TOP STRIP ── */
+  .cover-topstrip {
+    position: relative; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 28px 40px 0;
+    animation: riseIn .7s ease both;
+  }
+  .cover-logo-mark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 13px; font-weight: 400; letter-spacing: .06em;
+    color: rgba(237,234,228,0.35);
+  }
+  .cover-year-tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 10px; font-weight: 500; letter-spacing: .13em; text-transform: uppercase;
+    color: #ccff00; background: rgba(204,255,0,0.08);
+    border: 1px solid rgba(204,255,0,0.2);
+    padding: 4px 14px; border-radius: 20px;
+  }
+  .cover-year-tag-dot { width: 4px; height: 4px; border-radius: 50%; background: #ccff00; animation: blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+  /* ── MAIN STAGE ── */
+  .cover-main {
+    position: relative; z-index: 5;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 0 32px;
+    text-align: center;
+    gap: 0;
+  }
+
+  /* eyebrow label */
+  .cover-eyebrow {
+    font-size: 10px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase;
+    color: rgba(204,255,0,0.5);
+    margin-bottom: 20px;
+    animation: riseIn .8s .05s ease both;
+  }
+
+  /* ── GIANT TITLE ── */
+  .cover-title {
+    margin-bottom: 0;
+    animation: riseIn .9s .12s ease both;
+    position: relative;
+    line-height: 1;
+  }
+  .cover-word1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(72px, 15vw, 136px);
+    font-weight: 400; line-height: .92;
+    color: #f0ede6;
+    letter-spacing: -.04em; display: block;
+  }
+  .cover-word2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(72px, 15vw, 136px);
+    font-weight: 400; font-style: italic; line-height: .95;
+    color: #ccff00;
+    letter-spacing: -.04em; display: block;
+    position: relative; overflow: hidden;
+  }
+  .cover-word2::after {
+    content: '';
+    position: absolute; top: 0; left: -120%; width: 55%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: skewX(-15deg);
+    animation: shimmer 5s ease-in-out infinite 2s;
+  }
+  @keyframes shimmer { 0%,100%{left:-120%} 40%,60%{left:160%} }
+
+  /* thin divider */
+  .cover-divider {
+    display: flex; align-items: center; gap: 16px;
+    width: 100%; max-width: 480px;
+    margin: 32px auto 32px;
+    animation: riseIn .8s .22s ease both;
+  }
+  .cover-divider-line { flex: 1; height: 1px; background: rgba(204,255,0,0.15); }
+  .cover-divider-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(204,255,0,0.4); }
+
+  /* description */
+  .cover-desc {
+    font-size: 15px; color: rgba(237,234,228,0.42);
+    max-width: 360px; line-height: 1.85;
+    margin-bottom: 40px;
+    animation: riseIn .8s .28s ease both;
+  }
+
+  /* ── STATS ROW ── */
+  .cover-stats {
+    display: flex; gap: 0; margin-bottom: 40px;
+    border: 1px solid rgba(204,255,0,0.1);
+    border-radius: 14px; overflow: hidden;
+    animation: riseIn .8s .35s ease both;
+  }
+  .cover-stat {
+    padding: 16px 28px; text-align: center;
+    border-right: 1px solid rgba(204,255,0,0.07);
+    transition: background .25s;
+    cursor: default;
+  }
+  .cover-stat:hover { background: rgba(204,255,0,0.05); }
+  .cover-stat:last-child { border-right: none; }
+  .cover-stat strong {
+    display: block; font-size: 26px; font-weight: 300;
+    color: #ccff00; line-height: 1; margin-bottom: 6px;
+    font-family: 'DM Serif Display', serif; font-style: italic;
+  }
+  .cover-stat span { font-size: 9px; color: rgba(237,234,228,0.28); letter-spacing: .12em; text-transform: uppercase; }
+
+  /* ── CTA ── */
+  .cover-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    color: #0d1200; background: #ccff00;
+    padding: 15px 34px; border-radius: 40px; border: none; cursor: pointer;
+    position: relative; overflow: hidden;
+    box-shadow: 0 0 0 0 rgba(204,255,0,0);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), background .2s, box-shadow .3s;
+    animation: riseIn .8s .42s ease both;
+    letter-spacing: .01em;
+  }
+  .cover-btn::before {
+    content: ''; position: absolute; inset: 0; border-radius: 40px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+    opacity: 0; transition: opacity .25s;
+  }
+  .cover-btn:hover {
+    background: #d9ff33;
+    transform: translateY(-5px) scale(1.05);
+    box-shadow:
+      0 12px 32px rgba(204,255,0,0.38),
+      0 4px 10px rgba(204,255,0,0.22),
+      0 0 0 5px rgba(204,255,0,0.1);
+  }
+  .cover-btn:hover::before { opacity: 1; }
+  .cover-btn:active { transform: translateY(-1px) scale(.98); transition-duration: .1s; }
+  .cover-btn svg { width: 14px; height: 14px; transition: transform .3s cubic-bezier(.34,1.56,.64,1); }
+  .cover-btn:hover svg { transform: translateX(5px); }
+
+  /* ── PROFESSOR CARD ── */
+  .prof-section {
+    position: relative; z-index: 10;
+    padding: 24px 40px 32px;
+    animation: riseIn .8s .5s ease both;
+  }
+  .prof-card {
+    display: flex; align-items: center; gap: 18px;
+    background: rgba(10,14,2,0.7);
+    border: 1px solid rgba(204,255,0,0.12);
+    border-radius: 16px;
+    padding: 18px 22px;
+    max-width: 680px; margin: 0 auto;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .prof-avatar {
+    width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(204,255,0,0.1);
+    border: 2px solid rgba(204,255,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600; color: #ccff00; letter-spacing: .03em;
+    box-shadow: 0 0 16px rgba(204,255,0,0.12);
+  }
+  .prof-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+  .prof-role {
+    font-size: 9px; font-weight: 500; letter-spacing: .15em; text-transform: uppercase;
+    color: rgba(204,255,0,0.45);
+  }
+  .prof-name {
+    font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 500;
+    color: rgba(237,234,228,0.9); line-height: 1.2;
+  }
+  .prof-dept {
+    font-size: 11px; color: rgba(237,234,228,0.3); margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  @keyframes riseIn { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+
+  /* APP */
+  #app { display: none; padding-top: 67px; }
+  #app.visible { animation: riseIn .4s ease; }
+
+  .page { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .hero {
+    padding: 50px 0 42px; border-bottom: 1px solid var(--border); margin-bottom: 32px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -50px; left: -30px;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(204,255,0,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent); background: var(--bg2);
+    border: 1px solid var(--border2);
+    padding: 4px 13px; border-radius: 20px; margin-bottom: 14px;
+  }
+  .hero-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: blink 2s infinite; }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(30px, 5vw, 48px); font-weight: 400;
+    line-height: 1.1; color: var(--text); margin-bottom: 12px;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero p { font-size: 14px; color: var(--text2); max-width: 500px; line-height: 1.7; }
+  .hero-meta { display: flex; gap: 22px; margin-top: 22px; flex-wrap: wrap; }
+  .hero-stat { display: flex; flex-direction: column; gap: 2px; }
+  .hero-stat strong { font-size: 20px; font-weight: 500; color: var(--text); }
+  .hero-stat span { font-size: 11px; color: var(--text3); letter-spacing: .04em; text-transform: uppercase; }
+
+  .tabs {
+    display: flex; gap: 2px; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 4px; margin-bottom: 30px; overflow-x: auto; scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex: 1; min-width: 88px; padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    border: none; border-radius: 9px; background: none; cursor: pointer;
+    color: var(--text2); transition: all .2s; white-space: nowrap;
+  }
+  .tab-btn.active { background: var(--bg3); color: var(--text); box-shadow: 0 1px 3px var(--shadow); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  .panel { display: none; animation: riseIn .25s ease; }
+  .panel.active { display: block; }
+
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 18px; }
+
+  .values-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 26px; }
+  @media(max-width:580px) { .values-grid { grid-template-columns: 1fr; } }
+  .value-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; cursor: pointer; transition: border-color .2s, background .2s;
+    position: relative; overflow: hidden;
+  }
+  .value-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--card-accent, var(--accent)); opacity: 0; transition: opacity .2s; }
+  .value-card:hover { border-color: var(--border2); }
+  .value-card.active { border-color: var(--card-accent, var(--accent)); background: var(--bg3); }
+  .value-card.active::before { opacity: 1; }
+  .value-vs { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; }
+  .value-left { font-size: 13px; font-weight: 500; color: var(--text); }
+  .value-sep { font-size: 10px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+  .value-right { font-size: 12px; color: var(--text3); }
+  .value-desc { font-size: 13px; color: var(--text2); line-height: 1.6; display: none; margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--border); }
+  .value-card.active .value-desc { display: block; }
+
+  .principle-item { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); cursor: pointer; align-items: center; transition: opacity .15s; }
+  .principle-item:last-child { border-bottom: none; }
+  .principle-item:hover { opacity: .75; }
+  .principle-item:hover .p-num { background: rgba(204,255,0,0.22); transform: scale(1.08); }
+  .p-num { font-size: 13px; font-weight: 600; color: var(--accent); background: rgba(204,255,0,0.14); border: 1.5px solid rgba(204,255,0,0.3); min-width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: background .2s, transform .2s; }
+  .p-text { font-size: 13px; color: var(--text2); line-height: 1.65; }
+  .p-text strong { color: var(--text); font-weight: 500; }
+
+  .authors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px,1fr)); gap: 8px; margin-bottom: 16px; }
+  .author-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 13px 11px; cursor: pointer; transition: border-color .2s; }
+  .author-card:hover { border-color: var(--border2); }
+  .author-card.active { border-color: var(--blue); }
+  .author-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; margin-bottom: 9px; }
+  .author-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px; line-height: 1.3; }
+  .author-method { font-size: 11px; color: var(--text3); }
+  .author-detail { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-top: 4px; animation: riseIn .2s ease; }
+  .author-detail h3 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+  .author-detail .mbadge { display: inline-block; font-size: 11px; font-weight: 500; color: var(--blue); background: rgba(91,156,246,0.1); padding: 2px 10px; border-radius: 20px; margin-bottom: 11px; }
+  .author-detail p { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+  .timeline { position: relative; padding-left: 26px; }
+  .timeline::before { content: ''; position: absolute; left: 6px; top: 10px; bottom: 10px; width: 1px; background: var(--border2); }
+  .tl-item { position: relative; margin-bottom: 30px; }
+  .tl-dot { position: absolute; left: -22px; top: 5px; width: 11px; height: 11px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent); }
+  .tl-date { font-size: 11px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .tl-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+  .tl-body { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+  .v-nav { display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap; }
+  .v-nav-btn { padding: 6px 13px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; border: 1px solid var(--border); border-radius: 8px; background: none; cursor: pointer; color: var(--text2); transition: all .15s; }
+  .v-nav-btn.active { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+  .v-nav-btn:hover:not(.active) { border-color: var(--border2); color: var(--text); }
+  .v-panel { display: none; animation: riseIn .2s ease; }
+  .v-panel.active { display: block; }
+  .valor-num { font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 7px; }
+  .valor-heading { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text); line-height: 1.2; margin-bottom: 3px; }
+  .valor-contra { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+  .scenario-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+  .scenario-header { display: flex; gap: 11px; align-items: center; padding: 13px 16px; cursor: pointer; transition: background .15s; }
+  .scenario-header:hover { background: var(--bg3); }
+  .scenario-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .s-meta { flex: 1; }
+  .s-tag { font-size: 10px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); margin-bottom: 2px; }
+  .s-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .s-arrow { color: var(--text3); font-size: 16px; transition: transform .2s; }
+  .s-arrow.open { transform: rotate(90deg); }
+  .scenario-body { padding: 0 16px 16px; }
+  .scene-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  @media(max-width:560px) { .scene-compare { grid-template-columns: 1fr; } }
+  .scene-col { border-radius: 9px; padding: 11px 13px; }
+  .scene-col-label { font-size: 10px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 7px; }
+  .scene-col p { font-size: 12px; line-height: 1.65; }
+  .col-bad { background: rgba(240,123,91,0.08); }
+  .col-bad .scene-col-label { color: var(--coral); }
+  .col-bad p { color: var(--text2); }
+  .col-good { background: rgba(61,217,164,0.08); }
+  .col-good .scene-col-label { color: var(--teal); }
+  .col-good p { color: var(--text2); }
+  .reflection { font-size: 13px; color: var(--text2); line-height: 1.7; padding: 10px 13px; background: var(--bg3); border-left: 2px solid var(--border2); border-radius: 0 9px 9px 0; }
+  .reflection em { font-style: italic; color: var(--text); }
+  .s-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+  .s-nav-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 7px 16px; border: 1px solid var(--border2); border-radius: 9px; background: none; cursor: pointer; color: var(--text2); transition: all .15s; }
+  .s-nav-btn:hover:not(:disabled) { background: var(--bg3); color: var(--text); }
+  .s-nav-btn:disabled { opacity: .25; cursor: default; }
+  .s-nav-cta { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 7px 16px; border: 1px solid rgba(91,156,246,.35); border-radius: 9px; background: rgba(91,156,246,.07); cursor: pointer; color: var(--blue); transition: all .15s; }
+  .s-nav-cta:hover { background: rgba(91,156,246,.12); }
+  .s-counter { font-size: 12px; color: var(--text3); }
+
+  .quiz-prog { display: flex; gap: 4px; margin-bottom: 22px; }
+  .quiz-prog-dot { flex: 1; height: 3px; border-radius: 2px; background: var(--border2); transition: background .3s; }
+  .quiz-prog-dot.done { background: var(--accent); }
+  .quiz-prog-dot.current { background: var(--blue); }
+  .quiz-q { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 18px; line-height: 1.4; }
+  .quiz-opts { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+  .quiz-opt { padding: 11px 15px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg2); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text2); transition: all .15s; text-align: left; }
+  .quiz-opt:hover { border-color: var(--border2); color: var(--text); background: var(--bg3); }
+  .quiz-opt.correct { background: rgba(61,217,164,0.1); border-color: var(--teal); color: var(--teal); }
+  .quiz-opt.wrong { background: rgba(240,123,91,0.1); border-color: var(--coral); color: var(--coral); }
+  .quiz-fb { font-size: 13px; line-height: 1.65; padding: 11px 13px; background: var(--bg2); border: 1px solid var(--border); border-radius: 9px; margin-bottom: 14px; color: var(--text2); display: none; }
+  .quiz-fb-row { display: flex; justify-content: flex-end; }
+  .quiz-next-btn { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 18px; border: 1px solid var(--border2); border-radius: 9px; background: var(--bg3); cursor: pointer; color: var(--text); transition: all .15s; display: none; }
+  .quiz-next-btn:hover { background: var(--bg2); }
+  .quiz-score { text-align: center; padding: 28px 16px; }
+  .score-circle { width: 96px; height: 96px; border-radius: 50%; border: 2px solid var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 18px; }
+  .score-num { font-size: 30px; font-weight: 300; color: var(--accent); }
+  .score-denom { font-size: 12px; color: var(--text3); }
+  .score-msg { font-size: 14px; color: var(--text2); margin-bottom: 18px; }
+  .score-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .score-btn { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 18px; border: 1px solid var(--border2); border-radius: 9px; background: none; cursor: pointer; color: var(--text2); transition: all .15s; }
+  .score-btn:hover { background: var(--bg2); color: var(--text); }
+  .score-btn.primary { border-color: rgba(204,255,0,.4); color: var(--accent); background: rgba(204,255,0,.06); }
+  .score-btn.primary:hover { background: rgba(204,255,0,.1); }
+
+  .footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .footer p { font-size: 12px; color: var(--text3); }
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE BREAKPOINTS
+  ══════════════════════════════════════ */
+
+  /* ── tablet ≤ 768px ── */
+  @media (max-width: 768px) {
+    .cover-topstrip { padding: 20px 20px 0; }
+    .cover-main { padding: 0 20px; }
+    .cover-eyebrow { font-size: 9px; letter-spacing: .14em; }
+    .cover-divider { margin: 20px auto; }
+    .cover-desc { font-size: 14px; margin-bottom: 24px; max-width: 100%; }
+    .cover-stats { margin-bottom: 24px; }
+    .cover-stat { padding: 12px 18px; }
+    .cover-stat strong { font-size: 22px; }
+    .prof-section { padding: 16px 20px 24px; }
+    .prof-card { padding: 14px 16px; gap: 12px; }
+    .prof-name { font-size: 15px; }
+    .prof-dept { font-size: 10px; white-space: normal; }
+    .prof-meta-year { font-size: 16px; }
+    .hero { padding: 36px 0 32px; }
+    .hero-meta { gap: 16px; }
+    .tab-btn { min-width: 70px; font-size: 12px; padding: 7px 10px; }
+    .authors-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); }
+    .scene-compare { grid-template-columns: 1fr; }
+    .values-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── mobile ≤ 480px ── */
+  @media (max-width: 480px) {
+    .cover-topstrip { padding: 16px 16px 0; }
+    .cover-logo-mark { display: none; }
+    .cover-main { padding: 0 16px; }
+    .cover-word1, .cover-word2 { letter-spacing: -.02em; }
+    .cover-eyebrow { font-size: 8px; letter-spacing: .1em; }
+    .cover-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      border-radius: 12px; width: 100%;
+    }
+    .cover-stat { border-right: none; border-bottom: 1px solid rgba(204,255,0,0.07); padding: 10px 8px; }
+    .cover-stat:nth-child(odd) { border-right: 1px solid rgba(204,255,0,0.07); }
+    .cover-stat:nth-child(3), .cover-stat:nth-child(4) { border-bottom: none; }
+    .cover-stat strong { font-size: 20px; }
+    .cover-stat span { font-size: 8px; }
+    .cover-btn { font-size: 13px; padding: 13px 20px; width: 100%; max-width: 320px; justify-content: center; }
+    .prof-section { padding: 10px 16px 18px; }
+    .prof-card { flex-wrap: wrap; gap: 10px; padding: 12px 14px; border-radius: 12px; }
+    .prof-avatar { width: 40px; height: 40px; font-size: 13px; }
+    .prof-name { font-size: 14px; }
+    .prof-dept { white-space: normal; font-size: 10px; }
+    .prof-meta { display: none; }
+    .page { padding: 0 16px 56px; }
+    .hero { padding: 28px 0 22px; }
+    .hero h1 { font-size: clamp(24px, 7vw, 34px); }
+    .hero-meta { gap: 12px; }
+    .hero-stat strong { font-size: 17px; }
+    .tabs { border-radius: 10px; }
+    .tab-btn { min-width: 68px; font-size: 11px; padding: 6px 8px; }
+    .author-card { padding: 10px 8px; }
+    .authors-grid { grid-template-columns: repeat(auto-fill, minmax(98px,1fr)); gap: 6px; }
+    .quiz-q { font-size: 14px; }
+    .quiz-opt { padding: 10px 12px; font-size: 12px; }
+    .timeline { padding-left: 20px; }
+    .footer { flex-direction: column; align-items: flex-start; gap: 6px; }
+  }
+
+  /* ── very small ≤ 360px ── */
+  @media (max-width: 360px) {
+    .cover-word1, .cover-word2 { font-size: clamp(50px, 17vw, 72px); letter-spacing: -.015em; }
+    .cover-eyebrow { display: none; }
+    .tab-btn { min-width: 56px; font-size: 10px; padding: 6px 5px; }
+    .cover-stat strong { font-size: 18px; }
+  }
+
+  /* ── landscape phone ≤ 667px height ── */
+  @media (max-height: 500px) and (orientation: landscape) {
+    #cover { min-height: auto; }
+    .cover-main { padding: 8px 24px; }
+    .cover-word1, .cover-word2 { font-size: clamp(40px, 9vw, 64px); line-height: .9; }
+    .cover-eyebrow { display: none; }
+    .cover-divider { margin: 10px auto; }
+    .cover-desc { display: none; }
+    .cover-stats { margin-bottom: 16px; }
+    .cover-stat { padding: 8px 14px; }
+    .prof-section { padding: 8px 20px 12px; }
+    .prof-card { padding: 10px 14px; }
+    .prof-dept { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar hidden" id="topbar">
+  <button class="icon-btn" onclick="goHome()" title="Início">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9.5L10 3l7 6.5V17a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+      <path d="M7 18v-5.5h6V18"/>
+    </svg>
+  </button>
+  <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Alternar tema">
+    <svg id="icon-sun" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <circle cx="10" cy="10" r="3.5"/>
+      <line x1="10" y1="1.5" x2="10" y2="3.5"/><line x1="10" y1="16.5" x2="10" y2="18.5"/>
+      <line x1="1.5" y1="10" x2="3.5" y2="10"/><line x1="16.5" y1="10" x2="18.5" y2="10"/>
+      <line x1="4.1" y1="4.1" x2="5.5" y2="5.5"/><line x1="14.5" y1="14.5" x2="15.9" y2="15.9"/>
+      <line x1="15.9" y1="4.1" x2="14.5" y2="5.5"/><line x1="5.5" y1="14.5" x2="4.1" y2="15.9"/>
+    </svg>
+    <svg id="icon-moon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+      <path d="M17.5 13A7.5 7.5 0 017 2.5a7.5 7.5 0 1010.5 10.5z"/>
+    </svg>
+  </button>
+</div>
+
+<!-- COVER -->
+<div id="cover">
+
+  <!-- texture & particles -->
+  <div id="cover-noise"></div>
+  <div id="cover-particles"></div>
+
+  <!-- top strip: wordmark + year pill -->
+  <div class="cover-topstrip">
+    <div class="cover-logo-mark">MA · 2001</div>
+    <div class="cover-year-tag">
+      <div class="cover-year-tag-dot"></div>
+      Snowbird, Utah
+    </div>
+  </div>
+
+  <!-- main stage -->
+  <div class="cover-main">
+
+    <div class="cover-eyebrow">Manifesto para o Desenvolvimento Ágil de Software</div>
+
+    <div class="cover-title">
+      <span class="cover-word1">Manifesto</span>
+      <span class="cover-word2">Ágil</span>
+    </div>
+
+    <div class="cover-divider">
+      <div class="cover-divider-line"></div>
+      <div class="cover-divider-dot"></div>
+      <div class="cover-divider-line"></div>
+    </div>
+
+    <p class="cover-desc">17 líderes de software se reuniram e mudaram para sempre o desenvolvimento de software.</p>
+
+    <div class="cover-stats">
+      <div class="cover-stat"><strong>4</strong><span>Valores</span></div>
+      <div class="cover-stat"><strong>12</strong><span>Princípios</span></div>
+      <div class="cover-stat"><strong>17</strong><span>Signatários</span></div>
+      <div class="cover-stat"><strong>2001</strong><span>Publicado</span></div>
+    </div>
+
+    <button class="cover-btn" onclick="enterApp()">
+      Explorar o Manifesto
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 8h10M9 4l4 4-4 4"/>
+      </svg>
+    </button>
+
+  </div>
+
+  <!-- professor footer -->
+  <div class="prof-section">
+    <div class="prof-card">
+      <div class="prof-avatar">JT</div>
+      <div class="prof-info">
+        <div class="prof-role">Professor</div>
+        <div class="prof-name">José Themoteo</div>
+        <div class="prof-dept">Gestão Ágil de Projetos de Software</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- APP -->
+<div id="app">
+<div class="page">
+  <div class="hero">
+    <div class="hero-pill">Snowbird, Utah &mdash; Fevereiro 2001</div>
+    <h1>Manifesto <em>Ágil</em></h1>
+    <p>17 líderes de software se reuniram e mudaram para sempre o desenvolvimento de software. Explore os valores, princípios e as pessoas por trás dessa revolução.</p>
+    <div class="hero-meta">
+      <div class="hero-stat"><strong>4</strong><span>Valores</span></div>
+      <div class="hero-stat"><strong>12</strong><span>Princípios</span></div>
+      <div class="hero-stat"><strong>17</strong><span>Signatários</span></div>
+      <div class="hero-stat"><strong>2001</strong><span>Publicado</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('valores',this)">Valores</button>
+    <button class="tab-btn" onclick="showTab('exemplos',this)">Exemplos</button>
+    <button class="tab-btn" onclick="showTab('principios',this)">12 Princípios</button>
+    <button class="tab-btn" onclick="showTab('autores',this)">17 Autores</button>
+    <button class="tab-btn" onclick="showTab('historia',this)">História</button>
+    <button class="tab-btn" onclick="showTab('quiz',this)">Quiz</button>
+  </div>
+
+  <!-- VALORES -->
+  <div id="tab-valores" class="panel active">
+    <p class="section-label">Os 4 valores centrais</p>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:22px;line-height:1.7">O Manifesto define quatro valores. O lado esquerdo é mais valorizado — mas o lado direito ainda tem valor. Clique para expandir.</p>
+    <div class="values-grid">
+      <div class="value-card" style="--card-accent:var(--blue)" onclick="this.classList.toggle('active')">
+        <div class="value-vs"><span class="value-left">Indivíduos e interações</span><span class="value-sep" style="background:rgba(91,156,246,0.1);color:var(--blue)">mais que</span></div>
+        <div class="value-right">processos e ferramentas</div>
+        <div class="value-desc">Pessoas motivadas e a comunicação direta entre elas superam qualquer ferramenta sofisticada. Times auto-organizados entregam mais valor quando confiam uns nos outros.</div>
+      </div>
+      <div class="value-card" style="--card-accent:var(--teal)" onclick="this.classList.toggle('active')">
+        <div class="value-vs"><span class="value-left">Software funcionando</span><span class="value-sep" style="background:rgba(61,217,164,0.1);color:var(--teal)">mais que</span></div>
+        <div class="value-right">documentação abrangente</div>
+        <div class="value-desc">A principal medida de progresso é software que funciona nas mãos do cliente. Documentação tem valor, mas não substitui a entrega real de valor.</div>
+      </div>
+      <div class="value-card" style="--card-accent:var(--amber)" onclick="this.classList.toggle('active')">
+        <div class="value-vs"><span class="value-left">Colaboração com o cliente</span><span class="value-sep" style="background:rgba(245,200,66,0.1);color:var(--amber)">mais que</span></div>
+        <div class="value-right">negociação de contratos</div>
+        <div class="value-desc">Envolver o cliente continuamente ao longo do desenvolvimento gera produtos mais alinhados às necessidades reais do que contratos rígidos negociados no início.</div>
+      </div>
+      <div class="value-card" style="--card-accent:var(--purple)" onclick="this.classList.toggle('active')">
+        <div class="value-vs"><span class="value-left">Responder a mudanças</span><span class="value-sep" style="background:rgba(167,139,250,0.1);color:var(--purple)">mais que</span></div>
+        <div class="value-right">seguir um plano</div>
+        <div class="value-desc">Times ágeis abraçam a mudança como vantagem competitiva. Adaptar-se a novos requisitos, mesmo tarde no desenvolvimento, é preferível a seguir um plano desatualizado.</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--text3);font-style:italic;text-align:center">"Mesmo havendo valor nos itens à direita, valorizamos mais os itens à esquerda." — Manifesto Ágil</p>
+  </div>
+
+  <!-- EXEMPLOS -->
+  <div id="tab-exemplos" class="panel">
+    <p class="section-label">Exemplos práticos</p>
+    <div class="v-nav">
+      <button class="v-nav-btn active" onclick="goValor(0,this)">1. Indivíduos</button>
+      <button class="v-nav-btn" onclick="goValor(1,this)">2. Software</button>
+      <button class="v-nav-btn" onclick="goValor(2,this)">3. Colaboração</button>
+      <button class="v-nav-btn" onclick="goValor(3,this)">4. Mudanças</button>
+    </div>
+    <div id="vp0" class="v-panel active">
+      <div class="valor-num">Valor 1 de 4</div><div class="valor-heading">Indivíduos e interações</div><div class="valor-contra">mais que processos e ferramentas</div>
+      <div class="scenario-box"><div class="scenario-header" onclick="toggleScenario(this)"><div class="scenario-dot" style="background:var(--blue)"></div><div class="s-meta"><div class="s-tag">Cenário do dia a dia</div><div class="s-title">Bug crítico em produção às 18h</div></div><div class="s-arrow">›</div></div><div class="scenario-body" style="display:none"><div class="scene-compare"><div class="scene-col col-bad"><div class="scene-col-label">Sem o valor</div><p>O dev abre um ticket no Jira, preenche 8 campos, aguarda triagem, agenda reunião para o dia seguinte. O bug fica ativo por 14 horas.</p></div><div class="scene-col col-good"><div class="scene-col-label">Com o valor</div><p>Ana manda mensagem direta para Pedro: "vi o bug, consigo corrigir em 20 min, você pode revisar agora?" Bug resolvido em 40 minutos. Ticket aberto depois como registro.</p></div></div><div class="reflection">A ferramenta não desaparece — ela é o registro. Mas a <em>resolução</em> veio da conversa direta. O processo serviu às pessoas, não as controlou.</div></div></div>
+      <div class="scenario-box"><div class="scenario-header" onclick="toggleScenario(this)"><div class="scenario-dot" style="background:var(--blue)"></div><div class="s-meta"><div class="s-tag">Integração de novo membro</div><div class="s-title">Novo desenvolvedor integrado ao time</div></div><div class="s-arrow">›</div></div><div class="scenario-body" style="display:none"><div class="scene-compare"><div class="scene-col col-bad"><div class="scene-col-label">Sem o valor</div><p>Novo dev recebe PDF de 60 páginas. Segue os passos sozinho por duas semanas. Produz seu primeiro PR no dia 15.</p></div><div class="scene-col col-good"><div class="scene-col-label">Com o valor</div><p>Novo dev senta ao lado de uma dev sênior no primeiro dia. Em 3 horas fez pair programming e enviou o primeiro commit para produção.</p></div></div><div class="reflection">Interação direta transfere contexto que nenhum documento captura completamente. A mentoria acelerou meses de aprendizado.</div></div></div>
+      <div class="s-nav"><button class="s-nav-btn" disabled>← Anterior</button><span class="s-counter">1 / 4</span><button class="s-nav-btn" onclick="goValorIdx(1)">Próximo →</button></div>
+    </div>
+    <div id="vp1" class="v-panel">
+      <div class="valor-num">Valor 2 de 4</div><div class="valor-heading">Software funcionando</div><div class="valor-contra">mais que documentação abrangente</div>
+      <div class="scenario-box"><div class="scenario-header" onclick="toggleScenario(this)"><div class="scenario-dot" style="background:var(--teal)"></div><div class="s-meta"><div class="s-tag">Cenário de entrega</div><div class="s-title">Sistema de pagamentos para e-commerce</div></div><div class="s-arrow">›</div></div><div class="scenario-body" style="display:none"><div class="scene-compare"><div class="scene-col col-bad"><div class="scene-col-label">Sem o valor</div><p>Após 6 meses, o time entrega um documento de 200 páginas. O cliente ainda não viu nada rodando.</p></div><div class="scene-col col-good"><div class="scene-col-label">Com o valor</div><p>Após 2 semanas, o cliente faz um pagamento real com cartão. Nas seguintes: boleto, parcelamento, reembolso. Cada entrega é utilizável.</p></div></div><div class="reflection">Software funcionando revela problemas que documentação não revela. O cliente percebe na segunda semana que precisava de Pix — impossível de antecipar num doc escrito 6 meses antes.</div></div></div>
+      <div class="scenario-box"><div class="scenario-header" onclick="toggleScenario(this)"><div class="scenario-dot" style="background:var(--teal)"></div><div class="s-meta"><div class="s-tag">Decisão de negócio</div><div class="s-title">Demo para investidores no prazo</div></div><div class="s-arrow">›</div></div><div class="scenario-body" style="display:none"><div class="scene-compare"><div class="scene-col col-bad"><div class="scene-col-label">Sem o valor</div><p>Time tenta terminar todas as 47 features antes de mostrar algo. Demo adiada três vezes. Investidores perdem confiança.</p></div><div class="scene-col col-good"><div class="scene-col-label">Com o valor</div><p>Com 4 features funcionando perfeitamente, o time faz a demo. Investidores usam o produto ao vivo e redefinem as prioridades seguintes.</p></div></div><div class="reflection">Documentação descreve intenções. Software funcionando prova capacidade. Para um investidor, a diferença entre os dois vale milhões.</div></div></div>
+      <div class="s-nav"><button class="s-nav-btn" onclick="goValorIdx(0)">← Anterior</button><span class="s-counter">2 / 4</span><button class="s-nav-btn" onclick="goValorIdx(2)">Próximo →</button></div>
+    </div>
+    <div id="vp2" class="v-panel">
+      <div class="valor-num">Valor 3 de 4</div><div class="valor-heading">Colaboração com o cliente</div><div class="valor-contra">mais que negociação de contratos</div>
+      <div class="scenario-box"><div class="scenario-header" onclick="toggleScenario(this)"><div class="scenario-dot" style="background:var(--amber)"></div><div class="s-meta"><div class="s-tag">Cenário clássico</div><div class="s-title">App de gestão de estoque para varejo</div></div><div class="s-arrow">›</div></div><div class="scenario-body" style="display:none"><div class="scene-compare"><div class="scene-col col-bad"><div class="scene-col-label">Sem o valor</div><p>Contrato com 120 requisitos congelados. Cliente só vê o sistema 8 meses depois. A empresa foi adquirida no meio do projeto e as necessidades mudaram.</p></div><div class="scene-col col-good"><div class="scene-col-label">Com o valor</div><p>O gerente participa da review a cada duas semanas e sugere: "preciso ver o histórico por fornecedor, não por produto". O time ajusta na sprint seguinte.</p></div></div><div class="reflection">O contrato protege juridicamente, mas não produz software útil sozinho. A colaboração contínua garante que o software ainda vai resolver o problema certo.</div></div></div>
+      <div class="scenario-box"><div class="scenario-header" onclick="toggleScenario(this)"><div class="scenario-dot" style="background:var(--amber)"></div><div class="s-meta"><div class="s-tag">Mudança de escopo</div><div class="s-title">Feature pronta que o cliente não queria</div></div><div class="s-arrow">›</div></div><div class="scenario-body" style="display:none"><div class="scene-compare"><div class="scene-col col-bad"><div class="scene-col-label">Sem o valor</div><p>Time passa 3 semanas construindo relatórios em PDF. Na entrega: "nosso time usa Excel, PDF nunca vai funcionar". 3 semanas desperdiçadas.</p></div><div class="scene-col col-good"><div class="scene-col-label">Com o valor</div><p>Antes de começar, o PO conversa: "como você vai usar isso?" Resposta: "exportar pro Excel". Time constrói integração direta. 3 dias, uso imediato.</p></div></div><div class="reflection">O contrato dizia "módulo de relatórios". Só a colaboração revelou o que <em>"relatórios"</em> significava na prática para aquele cliente.</div></div></div>
+      <div class="s-nav"><button class="s-nav-btn" onclick="goValorIdx(1)">← Anterior</button><span class="s-counter">3 / 4</span><button class="s-nav-btn" onclick="goValorIdx(3)">Próximo →</button></div>
+    </div>
+    <div id="vp3" class="v-panel">
+      <div class="valor-num">Valor 4 de 4</div><div class="valor-heading">Responder a mudanças</div><div class="valor-contra">mais que seguir um plano</div>
+      <div class="scenario-box"><div class="scenario-header" onclick="toggleScenario(this)"><div class="scenario-dot" style="background:var(--purple)"></div><div class="s-meta"><div class="s-tag">Cenário de mercado</div><div class="s-title">Startup lançando app de finanças pessoais</div></div><div class="s-arrow">›</div></div><div class="scenario-body" style="display:none"><div class="scene-compare"><div class="scene-col col-bad"><div class="scene-col-label">Sem o valor</div><p>Plano: 12 meses, lançamento em dezembro. Em junho o Nubank lança feature idêntica. O time segue o plano. Em dezembro, o produto nasce obsoleto.</p></div><div class="scene-col col-good"><div class="scene-col-label">Com o valor</div><p>Em junho, o time pivota em 2 semanas para autônomos e MEIs. Lançamento em setembro com posicionamento claro e nicho ignorado pelos bancos.</p></div></div><div class="reflection">O plano de janeiro foi essencial para começar. Mas abandoná-lo em junho foi o que determinou o sucesso. O plano era uma hipótese, não uma obrigação.</div></div></div>
+      <div class="scenario-box"><div class="scenario-header" onclick="toggleScenario(this)"><div class="scenario-dot" style="background:var(--purple)"></div><div class="s-meta"><div class="s-tag">Contexto técnico</div><div class="s-title">Arquitetura que precisa mudar no meio do projeto</div></div><div class="s-arrow">›</div></div><div class="scenario-body" style="display:none"><div class="scene-compare"><div class="scene-col col-bad"><div class="scene-col-label">Sem o valor</div><p>Plano previa banco relacional. Na sprint 6 o time percebe que o volume exige outra abordagem. Gerente: "está no plano, vamos seguir". Sistema entra lento e caro.</p></div><div class="scene-col col-good"><div class="scene-col-label">Com o valor</div><p>O time apresenta a evidência na retrospectiva. Em consenso, migram o núcleo. Duas semanas de retrabalho evitam 2 anos de débito técnico crescente.</p></div></div><div class="reflection">Seguir um plano técnico desatualizado é dívida técnica com juros. Responder à evidência real — mesmo quando dói — separa produtos sustentáveis dos que somem em dois anos.</div></div></div>
+      <div class="s-nav"><button class="s-nav-btn" onclick="goValorIdx(2)">← Anterior</button><span class="s-counter">4 / 4</span><button class="s-nav-cta" onclick="showTab('quiz', document.querySelectorAll('.tab-btn')[5])">Fazer o quiz →</button></div>
+    </div>
+  </div>
+
+  <!-- PRINCÍPIOS -->
+  <div id="tab-principios" class="panel">
+    <p class="section-label">Os 12 princípios</p>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:22px;line-height:1.7">Os princípios guiam como equipes ágeis trabalham na prática. Eles derivam dos 4 valores e detalham comportamentos concretos.</p>
+    <div id="principles-list"></div>
+  </div>
+
+  <!-- AUTORES -->
+  <div id="tab-autores" class="panel">
+    <p class="section-label">Os 17 signatários</p>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:22px;line-height:1.7">Em fevereiro de 2001, 17 profissionais se reuniram em Snowbird, Utah. Clique em um autor para saber mais.</p>
+    <div class="authors-grid" id="authors-grid"></div>
+    <div id="author-detail" style="display:none"></div>
+  </div>
+
+  <!-- HISTÓRIA -->
+  <div id="tab-historia" class="panel">
+    <p class="section-label">Linha do tempo</p>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">Anos 1970–90</div><div class="tl-title">A era do modelo cascata</div><div class="tl-body">O desenvolvimento de software seguia modelos sequenciais rígidos. Requisitos eram congelados no início, projetos demoravam anos e frequentemente entregavam software desatualizado ou irrelevante.</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">Anos 1990</div><div class="tl-title">Métodos leves emergem</div><div class="tl-body">Surgem alternativas: Scrum (Schwaber & Sutherland, 1995), XP – Extreme Programming (Kent Beck, 1996), Crystal (Alistair Cockburn), DSDM e Feature Driven Development. Cada um rejeita o planejamento excessivo em favor de iterações curtas.</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">Fevereiro 2001</div><div class="tl-title">A reunião de Snowbird</div><div class="tl-body">17 líderes de diferentes metodologias se reúnem no Ski Bird Lodge, em Snowbird, Utah. Em três dias de discussão, convergem em valores e princípios comuns, produzindo o Manifesto para o Desenvolvimento Ágil de Software.</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">Março 2001</div><div class="tl-title">Publicação do Manifesto</div><div class="tl-body">O documento é publicado em agilemanifesto.org. A palavra "Ágil" é adotada como termo guarda-chuva para todos os métodos leves, batendo "Adaptativo", "Flexível" e outros termos considerados.</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2001–2010</div><div class="tl-title">Adoção em escala</div><div class="tl-body">Scrum e XP se tornam dominantes. A Agile Alliance é fundada. Surgem certificações, conferências e uma comunidade global de praticantes. O Scrum Guide é publicado em 2010.</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2010–hoje</div><div class="tl-title">Ágil além do software</div><div class="tl-body">Os princípios ágeis se expandem para marketing, RH, finanças e gestão em geral. Surgem frameworks de escala como SAFe, LeSS e Nexus. O Manifesto completa mais de duas décadas como referência fundacional do setor.</div></div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="tab-quiz" class="panel">
+    <p class="section-label">Teste seu conhecimento</p>
+    <div id="quiz-container"></div>
+  </div>
+
+  <div class="footer">
+    <p>Manifesto Ágil &copy; 2001 — <a href="https://agilemanifesto.org" target="_blank">agilemanifesto.org</a></p>
+    <p>&copy; 2026 &middot; Todos os direitos reservados</p>
+  </div>
+</div>
+</div>
+
+<script>
+function goHome() {
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('app').style.display = 'none';
+  const cover = document.getElementById('cover');
+  cover.style.display = 'flex';
+  cover.style.flexDirection = 'column';
+  document.getElementById('topbar').classList.add('hidden');
+  window.scrollTo(0,0);
+}
+function enterApp() {
+  document.getElementById('cover').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'block';
+  app.classList.add('visible');
+  document.getElementById('topbar').classList.remove('hidden');
+}
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('icon-sun').style.display = isDark ? 'block' : 'none';
+  document.getElementById('icon-moon').style.display = isDark ? 'none' : 'block';
+}
+
+const principles = [
+  {text:"Nossa maior prioridade é <strong>satisfazer o cliente</strong> através da entrega contínua e adiantada de software com valor agregado."},
+  {text:"<strong>Aceitar mudanças de requisitos</strong>, mesmo no fim do desenvolvimento. Processos ágeis tiram vantagem das mudanças visando vantagem competitiva para o cliente."},
+  {text:"Entregar frequentemente <strong>software funcionando</strong>, de poucas semanas a poucos meses, com preferência à menor escala de tempo."},
+  {text:"Pessoas de negócio e desenvolvedores devem trabalhar <strong>diariamente em conjunto</strong> por todo o projeto."},
+  {text:"Construir projetos em torno de <strong>indivíduos motivados</strong>. Dar a eles o ambiente e suporte necessários, e confiar neles para realizar o trabalho."},
+  {text:"O método mais eficiente e eficaz de transmitir informações é a <strong>conversa face a face</strong>."},
+  {text:"<strong>Software funcionando</strong> é a medida primária de progresso."},
+  {text:"Os processos ágeis promovem <strong>desenvolvimento sustentável</strong>. Os patrocinadores, desenvolvedores e usuários devem ser capazes de manter um ritmo constante indefinidamente."},
+  {text:"A contínua atenção à <strong>excelência técnica</strong> e ao bom design aumenta a agilidade."},
+  {text:"<strong>Simplicidade</strong> — a arte de maximizar a quantidade de trabalho não realizado — é essencial."},
+  {text:"As melhores arquiteturas, requisitos e designs emergem de <strong>times auto-organizados</strong>."},
+  {text:"Em intervalos regulares, a equipe <strong>reflete sobre como se tornar mais eficaz</strong> e então refina e ajusta seu comportamento de acordo."}
+];
+
+const authors = [
+  {name:"Kent Beck",initials:"KB",bg:"#1a2a3e",color:"#5b9cf6",method:"Extreme Programming (XP)",bio:"Criador do XP e pioneiro do Test-Driven Development (TDD). Autor de 'Extreme Programming Explained'. Trabalhou no Facebook e na Apple depois de décadas como consultor independente."},
+  {name:"Mike Beedle",initials:"MB",bg:"#1a2e1e",color:"#3dd9a4",method:"Scrum / Enterprise Scrum",bio:"Co-desenvolveu o framework Enterprise Scrum. Foi um dos signatários mais vocais sobre a aplicação do Scrum em larga escala em organizações empresariais."},
+  {name:"Arie van Bennekum",initials:"AB",bg:"#2e2a1a",color:"#f5c842",method:"DSDM",bio:"Especialista holandês e um dos principais representantes do DSDM (Dynamic Systems Development Method) na Europa. Consultor e trainer certificado DSDM."},
+  {name:"Alistair Cockburn",initials:"AC",bg:"#2e1a2a",color:"#f07b5b",method:"Crystal",bio:"Criador da família de metodologias Crystal, focadas em pessoas e comunicação. Autor de 'Agile Software Development' e 'Writing Effective Use Cases'."},
+  {name:"Ward Cunningham",initials:"WC",bg:"#1a2a3e",color:"#5b9cf6",method:"Wiki / CRC Cards",bio:"Inventor do conceito de Wiki (o primeiro wiki foi criado em 1995). Pioneiro dos padrões de software e co-criador do conceito de 'dívida técnica'."},
+  {name:"Martin Fowler",initials:"MF",bg:"#2a1a2e",color:"#a78bfa",method:"Refactoring / Patterns",bio:"Principal Scientist da ThoughtWorks. Autor de 'Refactoring', 'Patterns of Enterprise Application Architecture' e mantenedor do blog martinfowler.com."},
+  {name:"James Grenning",initials:"JG",bg:"#1a2a3e",color:"#5b9cf6",method:"XP / Embedded Agile",bio:"Especialista em XP em sistemas embarcados. Criador do Planning Poker, técnica amplamente usada em estimativas ágeis."},
+  {name:"Jim Highsmith",initials:"JH",bg:"#1a2e1e",color:"#3dd9a4",method:"Adaptive Software Dev.",bio:"Criador do Adaptive Software Development (ASD). Autor de 'Agile Project Management'. Fellow da Agile Alliance."},
+  {name:"Andrew Hunt",initials:"AH",bg:"#2e2a1a",color:"#f5c842",method:"Pragmatic Programmer",bio:"Co-autor do clássico 'The Pragmatic Programmer'. Fundador da Pragmatic Bookshelf, editora voltada a desenvolvedores."},
+  {name:"Ron Jeffries",initials:"RJ",bg:"#2e1a2a",color:"#f07b5b",method:"Extreme Programming (XP)",bio:"Um dos três fundadores do XP. Autor de 'Extreme Programming Installed'. Blogueiro ativo sobre Agile e XP."},
+  {name:"Jon Kern",initials:"JK",bg:"#1a2e1e",color:"#3dd9a4",method:"Feature Driven Dev.",bio:"Praticante e defensor do Feature Driven Development (FDD). Engenheiro e consultor com foco em métodos adaptativos."},
+  {name:"Brian Marick",initials:"BM",bg:"#2a1a2e",color:"#a78bfa",method:"Testing / XP",bio:"Especialista em testes de software e autor do modelo de quadrantes de testes ágeis. Consultor e pesquisador em práticas de qualidade."},
+  {name:"Robert C. Martin",initials:"RM",bg:"#1a2a3e",color:"#5b9cf6",method:"Clean Code / XP",bio:"Conhecido como 'Uncle Bob'. Autor de 'Clean Code', 'The Clean Coder' e criador dos princípios SOLID. Fundador da Clean Coders."},
+  {name:"Steve Mellor",initials:"SM",bg:"#1a2e1e",color:"#3dd9a4",method:"Model-Driven Dev.",bio:"Pioneiro da engenharia de software orientada a objetos e do desenvolvimento orientado a modelos (MDD)."},
+  {name:"Ken Schwaber",initials:"KS",bg:"#2e2a1a",color:"#f5c842",method:"Scrum",bio:"Co-criador do Scrum com Jeff Sutherland. Fundador da Scrum.org e co-autor do Scrum Guide."},
+  {name:"Jeff Sutherland",initials:"JS",bg:"#2e1a2a",color:"#f07b5b",method:"Scrum",bio:"Co-criador do Scrum. Apresentou o Scrum na OOPSLA em 1995. Autor de 'SCRUM: The Art of Doing Twice the Work in Half the Time'."},
+  {name:"Dave Thomas",initials:"DT",bg:"#1a2e1e",color:"#3dd9a4",method:"Pragmatic Programmer",bio:"Co-autor de 'The Pragmatic Programmer'. Fundador da Pragmatic Bookshelf. Defensor do Software Craftsmanship."}
+];
+
+const quizQuestions = [
+  {q:"Qual é a maior prioridade segundo o primeiro princípio do Manifesto Ágil?",opts:["Documentar todos os requisitos","Satisfazer o cliente com entregas contínuas","Seguir o plano do projeto","Evitar mudanças de escopo"],correct:1,feedback:"O primeiro princípio afirma que satisfazer o cliente através de entrega contínua e adiantada de software com valor é a maior prioridade."},
+  {q:"Em qual cidade e em qual ano foi criado o Manifesto Ágil?",opts:["Seattle, 2000","San Francisco, 2001","Snowbird, Utah, 2001","Chicago, 2002"],correct:2,feedback:"A reunião ocorreu em Snowbird, Utah, em fevereiro de 2001, no Ski Bird Lodge."},
+  {q:"Quantos autores assinaram o Manifesto Ágil?",opts:["12","15","17","21"],correct:2,feedback:"Foram exatamente 17 signatários representando diferentes metodologias ágeis."},
+  {q:"Qual dos itens é valorizado MAIS pelo Manifesto Ágil?",opts:["Documentação abrangente","Negociação de contratos","Software funcionando","Seguir um plano"],correct:2,feedback:"\"Software funcionando mais que documentação abrangente\" é um dos 4 valores centrais do Manifesto."},
+  {q:"Quem inventou o conceito de Wiki e é um dos 17 signatários?",opts:["Kent Beck","Ward Cunningham","Martin Fowler","Ron Jeffries"],correct:1,feedback:"Ward Cunningham criou o primeiro wiki em 1995 e foi um dos 17 signatários do Manifesto."},
+  {q:"O 12º princípio do Manifesto Ágil trata de:",opts:["Entrega contínua de software","Excelência técnica","Reflexão e ajuste regulares do time","Desenvolvimento sustentável"],correct:2,feedback:"O 12º princípio: em intervalos regulares, o time deve refletir e ajustar seu comportamento para se tornar mais eficaz."},
+  {q:"Qual metodologia foi co-criada por Ken Schwaber e Jeff Sutherland?",opts:["Crystal","Extreme Programming","Scrum","DSDM"],correct:2,feedback:"O Scrum foi co-criado por Ken Schwaber e Jeff Sutherland, ambos signatários do Manifesto Ágil."}
+];
+
+const pl = document.getElementById('principles-list');
+principles.forEach((p,i) => {
+  const d = document.createElement('div');
+  d.className = 'principle-item';
+  d.innerHTML = `<div class="p-num">${i+1}</div><div class="p-text">${p.text}</div>`;
+  pl.appendChild(d);
+});
+
+const ag = document.getElementById('authors-grid');
+authors.forEach((a,i) => {
+  const d = document.createElement('div');
+  d.className = 'author-card'; d.id = 'ac'+i;
+  d.innerHTML = `<div class="author-avatar" style="background:${a.bg};color:${a.color}">${a.initials}</div><div class="author-name">${a.name}</div><div class="author-method">${a.method}</div>`;
+  d.onclick = () => selectAuthor(i);
+  ag.appendChild(d);
+});
+
+function selectAuthor(i) {
+  document.querySelectorAll('.author-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('ac'+i).classList.add('active');
+  const a = authors[i], d = document.getElementById('author-detail');
+  d.style.display = 'block';
+  d.innerHTML = `<h3>${a.name}</h3><div class="mbadge">${a.method}</div><p>${a.bio}</p>`;
+}
+
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+function toggleScenario(header) {
+  const body = header.nextElementSibling, arrow = header.querySelector('.s-arrow');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  arrow.classList.toggle('open', !open);
+}
+let currentValor = 0;
+const vNavBtns = document.querySelectorAll('.v-nav-btn');
+function goValor(idx, btn) {
+  document.querySelectorAll('.v-panel').forEach(p => p.classList.remove('active'));
+  vNavBtns.forEach(b => b.classList.remove('active'));
+  document.getElementById('vp'+idx).classList.add('active');
+  if(btn) btn.classList.add('active');
+  currentValor = idx;
+}
+function goValorIdx(idx) { goValor(idx, vNavBtns[idx]); }
+
+let qIdx = 0, score = 0, answered = false;
+function renderQuiz() {
+  const qc = document.getElementById('quiz-container');
+  if (qIdx >= quizQuestions.length) {
+    const pct = Math.round((score/quizQuestions.length)*100);
+    const msgs = ["Continue estudando!","Bom progresso!","Muito bem!","Excelente domínio do tema!"];
+    const mi = pct<50?0:pct<70?1:pct<90?2:3;
+    qc.innerHTML = `<div class="quiz-score"><div class="score-circle"><span class="score-num">${score}</span><span class="score-denom">de ${quizQuestions.length}</span></div><p class="score-msg">${msgs[mi]}</p><div class="score-actions"><button class="score-btn primary" onclick="resetQuiz()">Refazer quiz</button><button class="score-btn" onclick="showTab('valores',document.querySelectorAll('.tab-btn')[0])">Revisar valores</button></div></div>`;
+    return;
+  }
+  const q = quizQuestions[qIdx];
+  const dots = quizQuestions.map((_,i) => `<div class="quiz-prog-dot ${i<qIdx?'done':i===qIdx?'current':''}"></div>`).join('');
+  qc.innerHTML = `<div class="quiz-prog">${dots}</div><div class="quiz-q">${q.q}</div><div class="quiz-opts">${q.opts.map((o,i)=>`<button class="quiz-opt" onclick="answer(${i})">${o}</button>`).join('')}</div><div class="quiz-fb" id="qfb">${q.feedback}</div><div class="quiz-fb-row"><button class="quiz-next-btn" id="qnext" onclick="nextQ()">Próxima →</button></div>`;
+  answered = false;
+}
+function answer(i) {
+  if(answered) return; answered = true;
+  const q = quizQuestions[qIdx], opts = document.querySelectorAll('.quiz-opt');
+  opts[i].classList.add(i===q.correct?'correct':'wrong');
+  if(i!==q.correct) opts[q.correct].classList.add('correct');
+  if(i===q.correct) score++;
+  document.getElementById('qfb').style.display = 'block';
+  const nb = document.getElementById('qnext');
+  nb.style.display = 'block';
+  nb.textContent = qIdx===quizQuestions.length-1?'Ver resultado →':'Próxima →';
+}
+function nextQ() { qIdx++; renderQuiz(); }
+function resetQuiz() { qIdx=0; score=0; renderQuiz(); }
+renderQuiz();
+
+// Floating cover particles
+(function(){
+  const container = document.getElementById('cover-particles');
+  if (!container) return;
+  const count = 18;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'cover-particle';
+    const size = Math.random() * 3 + 1.5;
+    const left = Math.random() * 100;
+    const delay = Math.random() * 14;
+    const dur = Math.random() * 12 + 10;
+    const startY = Math.random() * 60 + 40;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${left}%;
+      bottom:${startY}vh;
+      opacity:0;
+      animation-duration:${dur}s;
+      animation-delay:${delay}s;
+    `;
+    container.appendChild(p);
+  }
+})();
+</script>
+</body>
+</html>
